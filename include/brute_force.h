@@ -14,7 +14,7 @@
  * Returns: the distance between the particles as a double.
  *
  * **********************************************/
-double calculate_distance(std::vector<double>& pos1, std::vector<double>& pos2);
+double calculate_distance(const std::vector<double>& pos1, const std::vector<double>& pos2);
 
 /* **********************************************
  *
@@ -29,4 +29,4 @@ double calculate_distance(std::vector<double>& pos1, std::vector<double>& pos2);
  * Returns: the number of collisions as a int.
  *
  * **********************************************/
-int calculate_number_colisions(std::vector<std::vector<double>>& coordinates, double collision_distance);
+int calculate_number_colisions(const std::vector<std::vector<double>>& coordinates, double collision_distance);
