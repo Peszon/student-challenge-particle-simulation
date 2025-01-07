@@ -5,15 +5,16 @@
 #include <cstring>
 #include <vector>
 #include <string>
+#include <iomanip>
 
-using std::istringstream;
-using std::string;
-using std::vector;
 
 /* **********************************************
  *
  * Reads the given datafiles and returns a 2D 
  * string vector with the file content.
+ * 
+ * Input: - FILE_NAME: path of file.
+ * Returns: 2D vector with positions of the particles. 
  *
  * **********************************************/
-vector<vector<double>> read_positions_data(string FILE_NAME);
+std::vector<std::vector<double>> read_positions_data(std::string& FILE_NAME);

@@ -1,7 +1,11 @@
 #include "../include/data_reader.h"
 
+using std::istringstream;
+using std::string;
+using std::vector;
 
-vector<vector<double>> read_positions_data(string FILE_NAME)
+
+vector<vector<double>> read_positions_data(string& FILE_NAME)
 {
     std::ifstream file(FILE_NAME); // Open the file for reading
     if (!file.is_open()) {
