@@ -1,21 +1,23 @@
-#include "../include/data_reader.h"
-#include "../include/brute_force.h"
-#include "../include/timer.h"
-
-using std::vector;
-using std::string;
+#include "../include/CollisionFramework/CollisionFramework.h"
 
 int main()
 {
-    string DATA_FILE_NAME { "../data/positions_large.xyz" };
-    vector<vector<double>> coordinates;
-    coordinates = read_positions_data(DATA_FILE_NAME);
+    CollisionFramework::TestSettings testSettings = {
+        1,                                        // number of runs the test algorithm for time will average over.
+        0.05,                                     // Distance at witch collision occurs.
+        "/home/felixpersson/student-challenge-particle-simulation/data/positions.xyz",                       // Name of data file.
+        CollisionFramework::Algorithm::BruteForce // Choice of algorithm.
+    };
 
-    Timer t;
-    
-    for(int i { 0 }; i < 100; ++i) {
-        calculate_number_colisions(coordinates, 0.05);
-    } 
-    std::cout << "Average time taken: " << t.elapsed()/100 << " seconds\n";
+    CollisionFramework framework = CollisionFramework::generateCollisionFrameWork(testSettings);
+
+    // Testing the algorithm.
+    double timeTaken = framework.testAlgorithmForTime();
+    int collisions = framework.testAlgorithmForCollisions();
+
+    // Printing the results.
+    std::cout << "Time taken: " << timeTaken << " seconds\n";
+    std::cout << "Collisions detected: " << collisions << '\n';
+
     return 0;
 }

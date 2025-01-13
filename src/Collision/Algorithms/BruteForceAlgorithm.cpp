@@ -1,17 +1,17 @@
-#include "../include/brute_force.h"
+#include "Collision/Algorithms/BruteForceAlgorithm.h"
 
-using std::vector;
-
-double calculate_distance(const vector<double>& pos1, const vector<double>& pos2) {
+double BruteForceAlgorithm::calculate_distance(const Coordinate& pos1, const Coordinate& pos2) {
     return sqrt(pow(pos1[0] - pos2[0], 2) + pow(pos1[1] - pos2[1], 2) + pow(pos1[2] - pos2[2], 2));
 }
 
-int calculate_number_colisions(const vector<vector<double>>& coordinates, double collision_distance) {
+int BruteForceAlgorithm::run(const Coordinates& coordinates, double collision_distance) 
+{
     int collitions {0};
 
     unsigned int i {1};
     unsigned int j {0}; 
     while (i < coordinates.size()) {
+        j = 0;
         while (j < i) {
             if (collision_distance > calculate_distance(coordinates[i], coordinates[j])) {
                 ++collitions;

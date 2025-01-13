@@ -1,7 +1,6 @@
 #pragma once 
 
 #include <chrono> // for std::chrono functions
-#include "../include/timer.h"
 
 class Timer
 {

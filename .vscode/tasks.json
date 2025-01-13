@@ -15,11 +15,13 @@
                 "-Wconversion",
                 "-Wsign-conversion",
                 "-std=c++20",
-                "${workspaceFolder}/src/main.cpp",        // Explicitly specify main.cpp
-                "${workspaceFolder}/src/data_reader.cpp", // Include data_reader.cpp
-                "${workspaceFolder}/src/brute_force.cpp", // Include brute_force.cpp
+                "-I${workspaceFolder}/include",
+                "${workspaceFolder}/src/main.cpp", // Main entry point
+                "${workspaceFolder}/src/CollisionFramework/CollisionFramework.cpp",
+                "${workspaceFolder}/src/Collision/Algorithms/BruteForceAlgorithm.cpp",
+                "${workspaceFolder}/src/FileReader/FileReader.cpp",
                 "-o",
-                "${workspaceFolder}/bin/output" // Change this to the desired output location
+                "${workspaceFolder}/bin/output" // Output executable location
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
