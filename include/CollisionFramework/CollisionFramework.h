@@ -8,6 +8,7 @@
 
 #include "Collision/CollisionAlgorithm.h"
 #include "Collision/Algorithms/BruteForceAlgorithm.h"
+#include "Collision/Algorithms/SpatialSubdivisionAlgorithm.h"
 #include "FileReader/FileReader.h"
 #include "Timer/Timer.h"
 
@@ -20,6 +21,7 @@ class CollisionFramework
         enum class Algorithm
         {
             BruteForce = 0,
+            SpatialSubdivision = 2,
             noAlgorithm = 1
         };
 

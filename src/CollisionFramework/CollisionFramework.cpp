@@ -49,6 +49,9 @@ void CollisionFramework::generateCollisionAlgorithm()
         case Algorithm::BruteForce: 
             m_collisionAlgorithm = std::make_unique<BruteForceAlgorithm>();
             break;
+        case Algorithm::SpatialSubdivision: 
+            m_collisionAlgorithm = std::make_unique<SpatialSubdivisionAlgorithm>();
+            break;
         case Algorithm::noAlgorithm:
             m_collisionAlgorithm = nullptr;
             break;
