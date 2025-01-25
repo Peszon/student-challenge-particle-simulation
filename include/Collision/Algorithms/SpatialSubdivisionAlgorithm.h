@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdint>
 #include <vector>
+#include <bitset>
 
 
 class SpatialSubdivisionAlgorithm : public CollisionAlgorithm
@@ -18,7 +19,7 @@ class SpatialSubdivisionAlgorithm : public CollisionAlgorithm
             int Home_cell {};
         };
 
-        double calculate_distance(const Coordinate& p1, const Coordinate& p2);
+        double calculateDistanceSq(const Coordinate& p1, const Coordinate& p2);
 
         void initializeObjectandCellArray(
             const Coordinates& coordinates, 
@@ -26,6 +27,10 @@ class SpatialSubdivisionAlgorithm : public CollisionAlgorithm
             double particleRadiusSq, 
             std::vector<int64_t>& cellIdArray, 
             std::vector<object_id>& objectIdArray);
+        
+        void radixSort(std::vector<int64_t>& cellIdArray,  std::vector<object_id>& objectIdArray);
+
+        int calculateNumberOfCollisions(const Coordinates& coordinates, double collisionDistSq, std::vector<int64_t>& cellIdArray,  std::vector<object_id>& objectIdArray);
 
         void decode_hash(const int64_t& hash, int64_t &grid_x, int64_t &grid_y, int64_t &grid_z);
         int64_t hash_coordinates(int64_t x, int64_t y, int64_t z);
