@@ -3,9 +3,9 @@
 int main()
 {
     CollisionFramework::TestSettings testSettings = {
-        15,                                                                             // number of runs the test algorithm for time will average over.
+        10,                                                                             // number of runs the test algorithm for time will average over.
         0.05,                                                                          // Distance at witch collision occurs.
-        "/home/felixpersson/student-challenge-particle-simulation/data/positions_large.xyz", // Name of data file.
+        "/home/felixpersson/student-challenge-particle-simulation/data/positions.xyz", // Name of data file.
         CollisionFramework::Algorithm::SpatialSubdivision                              // Choice of algorithm.
     };
 

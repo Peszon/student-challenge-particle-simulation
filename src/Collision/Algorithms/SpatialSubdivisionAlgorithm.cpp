@@ -1,8 +1,5 @@
 #include "Collision/Algorithms/SpatialSubdivisionAlgorithm.h"
 
-double SpatialSubdivisionAlgorithm::calculateDistanceSq(const Coordinate& pos1, const Coordinate& pos2) {
-    return pow(pos1[0] - pos2[0], 2) + pow(pos1[1] - pos2[1], 2) + pow(pos1[2] - pos2[2], 2);
-}
 
 int SpatialSubdivisionAlgorithm::run(const Coordinates& coordinates, double collisionDistance) 
 {
@@ -14,46 +11,35 @@ int SpatialSubdivisionAlgorithm::run(const Coordinates& coordinates, double coll
 
     initializeObjectandCellArray(coordinates, cellLength, collisionDistSq, cellIdArray, objectIdArray);
 
-    // for (int i = 0; i < 0; i++) {
-    //     int64_t grid_x, grid_y, grid_z;
-    //     decode_hash(cellIdArray[i], grid_x, grid_y, grid_z);
-    //     std::cout << "Particle id: " << objectIdArray[i].particle_id << ", Home cell: " << objectIdArray[i].Home_cell << "\n";
-    //     std::cout << "Discretized x: " << grid_x << ", y: " << grid_y << ", z: " << grid_z << "\n" << std::endl;
-    // }
-
-    // std::cout << "----------------------------------------------\n";
     radixSort(cellIdArray, objectIdArray);
-
-    // for (int i = 0; i < 200; i++) {
-    //     int64_t grid_x, grid_y, grid_z;
-    //     decode_hash(cellIdArray[i], grid_x, grid_y, grid_z);
-    //     std::bitset<64> y(cellIdArray[i]);
-    //     std::cout << "Cell id: " << y << ", Particle id: " << objectIdArray[i].particle_id << ", Home cell: " << objectIdArray[i].Home_cell << "\n";
-    //     std::cout << "Discretized x: " << grid_x << ", y: " << grid_y << ", z: " << grid_z << "\n" << std::endl;
-    // }
 
     return calculateNumberOfCollisions(coordinates, collisionDistSq, cellIdArray, objectIdArray);
 }
 
-int SpatialSubdivisionAlgorithm::calculateNumberOfCollisions(const Coordinates& coordinates, double collisionDistSq, std::vector<int64_t>& cellIdArray,  std::vector<object_id>& objectIdArray) {
+
+int SpatialSubdivisionAlgorithm::calculateNumberOfCollisions(const Coordinates& coordinates, double collisionDistSq, std::vector<int64_t>& cellIdArray,  std::vector<object_id>& objectIdArray) 
+{
     const size_t arrayLength = cellIdArray.size();
     int collisionCounter { 0 };
 
     size_t i = 0;
+    // Loop over i as long as there is at least one more element to compare with i.
     while (i < (arrayLength - 1)) {
+        
+        // Inner loop used to iterate over elements to compare to the element at i. 
         for(size_t j = i + 1; j < arrayLength; j++) {
-            // std::bitset<32> x(cellIdArray[i]);
-            // std::bitset<32> y(cellIdArray[j]);
-
-            // std::cout << "Cell id: " << cellIdArray[i] << ", Particle id: " << objectIdArray[i].particle_id << ", Home cell: " << objectIdArray[i].Home_cell << "\n";
-            // std::cout << "Cell id: " << cellIdArray[j] << ", Particle id: " << objectIdArray[j].particle_id << ", Home cell: " << objectIdArray[j].Home_cell << "\n";
             
+            // If the cell IDs differ, we break from the inner loop because all further elements will also be in a different cell.
             if (cellIdArray[i] != cellIdArray[j]) {
                 break;
 
-            } else if (objectIdArray[i].Home_cell == 0) {      
+            // Only checking if there is a collision if in the i:ths particle's home cell.
+            // Thereby not 'double counting' the collision that would have occured in the j:th particle's home.
+            } else if (objectIdArray[j].Home_cell == 0) {      
                 continue; 
 
+            // At this point, both particles share the same cell, and we ignore the 'double counting' cases.
+            // If the distance between them is less than the collision distance we count it as a collision.
             } else {
                 Coordinate coordParticle1 = coordinates[objectIdArray[i].particle_id];
                 Coordinate coordParticle2 = coordinates[objectIdArray[j].particle_id];
@@ -62,11 +48,18 @@ int SpatialSubdivisionAlgorithm::calculateNumberOfCollisions(const Coordinates& 
                 }
             }
         }
+
         i++;
     }
 
     return collisionCounter;
 }
+
+
+double SpatialSubdivisionAlgorithm::calculateDistanceSq(const Coordinate& pos1, const Coordinate& pos2) {
+    return pow(pos1[0] - pos2[0], 2) + pow(pos1[1] - pos2[1], 2) + pow(pos1[2] - pos2[2], 2);
+}
+
 
 void SpatialSubdivisionAlgorithm::radixSort(std::vector<int64_t>& cellIdArray,  std::vector<object_id>& objectIdArray) {
     const size_t arrayLength = cellIdArray.size();
@@ -103,6 +96,7 @@ void SpatialSubdivisionAlgorithm::radixSort(std::vector<int64_t>& cellIdArray,  
         objectIdArray = replObjectIdArray;
     }
 } 
+
 
 void SpatialSubdivisionAlgorithm::initializeObjectandCellArray(const Coordinates& coordinates, double cellLength, double collisionDistSq, std::vector<int64_t>& cellIdArray, std::vector<object_id>& objectIdArray) {
     int object_id_counter = 0;
@@ -154,6 +148,7 @@ void SpatialSubdivisionAlgorithm::initializeObjectandCellArray(const Coordinates
     }
 }
 
+
 int64_t SpatialSubdivisionAlgorithm::hash_coordinates(int64_t grid_x, int64_t grid_y, int64_t grid_z) {
     // Encode into a 64-bit hash
     int64_t hash = 0;
@@ -162,6 +157,7 @@ int64_t SpatialSubdivisionAlgorithm::hash_coordinates(int64_t grid_x, int64_t gr
     hash |= (grid_z & 0xFFFF) << 32;   // Place Z in bits 32–47
     return hash;
 }
+
 
 void SpatialSubdivisionAlgorithm::decode_hash(const int64_t& hash, int64_t& grid_x, int64_t& grid_y, int64_t& grid_z) {
     // Extract and reinterpret as signed 16-bit integers

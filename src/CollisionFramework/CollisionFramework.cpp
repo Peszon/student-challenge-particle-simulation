@@ -1,5 +1,4 @@
 #include "CollisionFramework/CollisionFramework.h"
-#include <iostream>
 
 CollisionFramework::CollisionFramework() 
     : m_testSettings {},
