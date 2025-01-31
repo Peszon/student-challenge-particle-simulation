@@ -4,7 +4,7 @@ int SpatialSubdivisionOpenMPAlgorithm::run(
     const Coordinates& coordinates, 
     double collisionDistance) 
 {
-    double const cellLength {collisionDistance * 1.5}; // The times 1.5 makes it so that the maximum phantom cells is 8.
+    double const cellLength {collisionDistance * 1.5}; // The times 1.5 makes it so that the maximum number of phantom cells is 8.
     double const collisionDistSq { collisionDistance * collisionDistance };
 
     std::vector<int64_t> cellIdArray {};

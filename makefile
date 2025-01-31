@@ -1,7 +1,6 @@
 # Makefile for building the C++ project in production mode
 
-# Automatically use 16 parallel jobs if not specified
-MAKEFLAGS += -j16
+# Automatically use 16 parallel jobs if not specifie
 
 # Compiler to use
 CXX := /usr/bin/g++
