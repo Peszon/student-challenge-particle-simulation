@@ -8,6 +8,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "-pedantic-errors",
+                "-fopenmp",
                 "-Wall",
                 "-Weffc++",
                 "-Wextra",
@@ -19,6 +20,7 @@
                 "${workspaceFolder}/src/CollisionFramework/CollisionFramework.cpp",
                 "${workspaceFolder}/src/Collision/Algorithms/BruteForceAlgorithm.cpp",
                 "${workspaceFolder}/src/Collision/Algorithms/SpatialSubdivisionAlgorithm.cpp",
+                "${workspaceFolder}/src/Collision/Algorithms/SpatialSubdivisionOpenMPAlgorithm.cpp",
                 "${workspaceFolder}/src/FileReader/FileReader.cpp",
                 "-o",
                 "${workspaceFolder}/bin/output" // Output executable location
