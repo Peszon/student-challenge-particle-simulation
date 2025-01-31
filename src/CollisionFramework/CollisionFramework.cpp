@@ -51,6 +51,9 @@ void CollisionFramework::generateCollisionAlgorithm()
         case Algorithm::SpatialSubdivision: 
             m_collisionAlgorithm = std::make_unique<SpatialSubdivisionAlgorithm>();
             break;
+        case Algorithm::SpatialSubdivisionParallel: 
+            m_collisionAlgorithm = std::make_unique<SpatialSubdivisionOpenMPAlgorithm>();
+            break;
         case Algorithm::noAlgorithm:
             m_collisionAlgorithm = nullptr;
             break;

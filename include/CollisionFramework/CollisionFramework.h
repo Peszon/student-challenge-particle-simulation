@@ -9,6 +9,7 @@
 #include "Collision/CollisionAlgorithm.h"
 #include "Collision/Algorithms/BruteForceAlgorithm.h"
 #include "Collision/Algorithms/SpatialSubdivisionAlgorithm.h"
+#include "Collision/Algorithms/SpatialSubdivisionOpenMPAlgorithm.h"
 #include "FileReader/FileReader.h"
 #include "Timer/Timer.h"
 
@@ -28,9 +29,10 @@ class CollisionFramework
          */
         enum class Algorithm
         {
-            BruteForce = 0,           ///< Brute-force collision detection.
-            SpatialSubdivision = 2,  ///< Spatial subdivision-based collision detection.
-            noAlgorithm = 1          ///< Placeholder for no algorithm selected.
+            BruteForce = 0,                 ///< Brute-force collision detection.
+            SpatialSubdivision = 2,         ///< Spatial subdivision-based collision detection.
+            SpatialSubdivisionParallel = 3, ///< Parallel spatial subdivision-based collision detection.
+            noAlgorithm = 1                 ///< Placeholder for no algorithm selected.
         };
 
         /**

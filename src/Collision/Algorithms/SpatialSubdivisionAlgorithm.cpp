@@ -3,8 +3,8 @@
 
 int SpatialSubdivisionAlgorithm::run(const Coordinates& coordinates, double collisionDistance) 
 {
-    double cellLength {collisionDistance * 1.5}; // The times 1.5 makes it so that the maximum phantom cells is 8.
-    double collisionDistSq { collisionDistance * collisionDistance };
+    double const cellLength {collisionDistance * 1.5}; // The times 1.5 makes it so that the maximum phantom cells is 8.
+    double const collisionDistSq { collisionDistance * collisionDistance };
 
     std::vector<int64_t> cellIdArray {};
     std::vector<object_id> objectIdArray {};
@@ -68,6 +68,7 @@ void SpatialSubdivisionAlgorithm::radixSort(std::vector<int64_t>& cellIdArray,  
     std::vector<int64_t> replCellIdArray(arrayLength); 
     std::vector<object_id> replObjectIdArray(arrayLength);
 
+    // Since we use three coordinates each represented by 16 bits, we only need to sort for the first 48 bits. 
     for (int bitShift = 0; bitShift <= 40; bitShift += 8) {
         std::vector<int> radixCounter(256,0);
 
