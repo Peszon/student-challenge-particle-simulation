@@ -112,8 +112,8 @@ class SpatialSubdivisionOpenMPAlgorithm : public CollisionAlgorithm
         double calculateDistanceSq(const Coordinate& p1, const Coordinate& p2);
 
         /**
-         * Decodes a 64-bit hashed cell ID into its 3D grid coordinates.
-         *
+         * Decodes a 64-bit hashed cell ID into its 3D grid coordinates. 
+         * 
          * @param hash The hashed cell ID.
          * @param grid_x Output for the X coordinate of the grid cell.
          * @param grid_y Output for the Y coordinate of the grid cell.
@@ -122,7 +122,9 @@ class SpatialSubdivisionOpenMPAlgorithm : public CollisionAlgorithm
         void decode_hash(const int64_t& hash, int64_t& grid_x, int64_t& grid_y, int64_t& grid_z);
 
         /**
-         * Hashes the 3D grid cell coordinates into a 64-bit integer.
+         * Hashes the 3D grid cell coordinates into a 64-bit integer. 
+         * The first 48 bits contain the cell id information.
+         * 16 bits for each coordinate. 
          *
          * @param x The X coordinate of the grid cell.
          * @param y The Y coordinate of the grid cell.
