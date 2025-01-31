@@ -6,9 +6,9 @@
 #include <vector>
 #include <bitset>
 
-#define MAX_BLOCK_SIZE 384
+#define MAX_BLOCK_SIZE 384 //Dividable by 32 so each block work with full wraps. 
 
-// CUDA error checking macro
+// CUDA error checking macro.
 #define CUDA_CHECK(error)                                                    \
     do {                                                                     \
         cudaError_t err = error;                                             \
@@ -45,9 +45,8 @@ double* vecToArr(const std::vector<std::vector<double>>& vec) {
     return newarr;
 }
 
-// __device__ 
+__device__ 
 int64_t hash_coordinates(int64_t grid_x, int64_t grid_y, int64_t grid_z) {
-    // Encode into a 64-bit hash
     int64_t hash = 0;
     hash |= (grid_x & 0xFFFF);         // Place X in bits 0–15
     hash |= (grid_y & 0xFFFF) << 16;   // Place Y in bits 16–31
@@ -55,7 +54,7 @@ int64_t hash_coordinates(int64_t grid_x, int64_t grid_y, int64_t grid_z) {
     return hash;
 }
 
-// __global__ 
+__global__ 
 void initializeObjectandCellArray(
     double *coordinates, 
     int64_t *cellIdArray, 
@@ -125,7 +124,7 @@ void initializeObjectandCellArray(
 }
 
 
-// __global__ 
+__global__ 
 void placeCellIdFlags(
     int64_t *d_cellIdArray, 
     int64_t *d_cellIdArrayTemp,
@@ -162,10 +161,14 @@ void placeCellIdFlags(
 }
 
 
-//__device__ 
+__device__ 
 double calculateDistanceSq(
-    double x1, double y1, double z1,
-    double x2, double y2, double z2) 
+    double x1, 
+    double y1, 
+    double z1,
+    double x2,
+    double y2, 
+    double z2) 
 {
     double dx = x2 - x1;
     double dy = y2 - y1;
@@ -173,9 +176,10 @@ double calculateDistanceSq(
     return dx * dx + dy * dy + dz * dz;
 }
 
-//__device__ 
-void checkCollisionAndIncrement(
-    int i, int j,
+__device__ 
+void checkCollision(
+    int i, 
+    int j,
     const double *coordinates,
     const object_id *objectIdArray,
     double collDistSq,
@@ -200,7 +204,7 @@ void checkCollisionAndIncrement(
     }
 }
 
-// __global__ 
+__global__ 
 void calculateNumberOfCollisions(
     const int64_t *d_cellIdArray,
     const object_id *d_objectIdArray,  
@@ -225,8 +229,13 @@ void calculateNumberOfCollisions(
             // Check collisions with subsequent j
             for (int j = i + 1; j < arrayIdLength; j++) {
                 // Perform collision check
-                checkCollisionAndIncrement(
-                    i, j, coordinates, d_objectIdArray, collDistSq, d_collisionCounter);
+                checkCollision(
+                    i,
+                    j, 
+                    coordinates, 
+                    d_objectIdArray, 
+                    collDistSq, 
+                    d_collisionCounter);
 
                 // If flag says this is the last iteration for j, break afterward
                 if (d_flagCellIdEnd[j] == 1) {
@@ -250,23 +259,27 @@ int run(Coordinates h_vectorCoordinates, double collisionDistance) {
     unsigned int arrayIdLength = coordinatesLength * 8; // For every 3D coordinate get 1 cellId.
     unsigned int arrayIdSize = coordinatesLength* 8 * sizeof(int64_t);
 
+    // Move the coordinate to device global memory.
     double *h_coordinates = vecToArr(h_vectorCoordinates);
     double *d_coordinates; CUDA_CHECK(cudaMalloc(&d_coordinates, coordinatesSize));
 
     CUDA_CHECK(cudaMemcpy(d_coordinates, h_coordinates, coordinatesSize, cudaMemcpyHostToDevice));
 
+    // Create cellIdArray and objectIdArray.
     int64_t *d_cellIdArray; CUDA_CHECK(cudaMalloc(&d_cellIdArray, arrayIdSize));
     object_id *d_objectIdArray; CUDA_CHECK(cudaMalloc(&d_objectIdArray, arrayIdLength * sizeof(object_id)));
-        
+
+    // Create array on device for out data from the Radix sort.        
     int64_t *d_cellIdArrayOut; CUDA_CHECK(cudaMalloc(&d_cellIdArrayOut, arrayIdSize));
     object_id *d_objectIdArrayOut; CUDA_CHECK(cudaMalloc(&d_objectIdArrayOut, arrayIdLength * sizeof(object_id)));
 
-    unsigned int gridSize = coordinatesLength / MAX_BLOCK_SIZE;
     // Take advantage of the fact that integer division drops the decimals
+    unsigned int gridSize = coordinatesLength / MAX_BLOCK_SIZE;
     if (coordinatesLength % MAX_BLOCK_SIZE != 0) {
         gridSize += 1;
     }
 
+    // Create the cellIdArray and the ObjectIdArray for the obtained coordinates.
     initializeObjectandCellArray<<<gridSize, MAX_BLOCK_SIZE>>>(
         d_coordinates, 
         d_cellIdArray, 
@@ -279,6 +292,7 @@ int run(Coordinates h_vectorCoordinates, double collisionDistance) {
     // Create a variable to hold the temporary storage.
     size_t temp_storage_bytes = 0;
     void *d_temp_storage = nullptr;
+
     // First call sets temp_storage_bytes
     cub::DeviceRadixSort::SortPairs(nullptr, temp_storage_bytes,
                                     d_cellIdArray, d_cellIdArrayOut,
@@ -295,20 +309,21 @@ int run(Coordinates h_vectorCoordinates, double collisionDistance) {
 
     cudaDeviceSynchronize();
 
-    
-    unsigned int gridSizeNmbCollisions = arrayIdLength / MAX_BLOCK_SIZE;
     // Take advantage of the fact that integer division drops the decimals
-
+    unsigned int gridSizeNmbCollisions = arrayIdLength / MAX_BLOCK_SIZE;
     if (coordinatesLength % MAX_BLOCK_SIZE != 0) {
         gridSizeNmbCollisions += 1;
     }
 
+    // Create temporary arrays
     int64_t *d_cellIdArrayTemp = d_cellIdArray;
     object_id *d_objectIdArrayTemp = d_objectIdArray;
 
+    // Create arrays on device that store information regarding when the cell id changes. 
     int *d_flagCellIdStart; CUDA_CHECK(cudaMalloc(&d_flagCellIdStart, arrayIdLength * sizeof(int)));
     int *d_flagCellIdEnd; CUDA_CHECK(cudaMalloc(&d_flagCellIdEnd, arrayIdLength * sizeof(int)));
 
+    // Execute kernal that places start and end flags of the blocks of cell id in cellIdArray.
     placeCellIdFlags<<<gridSizeNmbCollisions, MAX_BLOCK_SIZE>>>(
         d_cellIdArrayOut, 
         d_cellIdArrayTemp, 
@@ -320,6 +335,7 @@ int run(Coordinates h_vectorCoordinates, double collisionDistance) {
 
     cudaDeviceSynchronize();
 
+    // Creates an collision counter array on the device, length equals the number of threads.
     int *d_collisionCounter; CUDA_CHECK(cudaMalloc((&d_collisionCounter), arrayIdLength * sizeof(int)));
     CUDA_CHECK(cudaMemset(d_collisionCounter, 0, arrayIdLength * sizeof(int)));
     double collDistSq = collisionDistance * collisionDistance;
@@ -337,7 +353,7 @@ int run(Coordinates h_vectorCoordinates, double collisionDistance) {
     cudaDeviceSynchronize();
 
 
-    // Reducing the count array
+    // Reducing the count array with built in cub function.
     int *d_collisionCounterOut = nullptr;
     CUDA_CHECK(cudaMalloc((void**)&d_collisionCounterOut, sizeof(int)));
 
