@@ -25,7 +25,7 @@ necessary headers. Change the number after -j to adjust the number of cores that
 
 ## Solution details
 
-This implementation provides a collision detection testing framework that reads a dataset of particle positions and lets you pick the setting for the algorithm testing. The system supports multiple algorithms, with the parallel Spatial subdivision algorithm being the default if you don't change the settings in the `main.cpp` file. The framework executes the algorithm ten times by default, averaging the execution time, and then reports the number of detected collisions and average runtime.
+This implementation provides a collision detection testing framework that reads a dataset of particle positions and let you pick the setting for the algorithm testing. The system supports multiple algorithms, with the parallel Spatial subdivision algorithm being the default if you don't change the settings in the `main.cpp` file. The framework executes the algorithm ten times by default, averaging the execution time, and then reports the number of detected collisions and average runtime.
 
 The parallelization of the algorithm using openMP reduces the relative time the algorithm takes by between 0.4 and 0.25. The execution of the program with the parallel spatial subdivision takes on average 0.17 s on my laptop. 
 
@@ -36,13 +36,13 @@ The second step is to sort the objects by cell_id so that all objects from the s
 The third step is to calculate the amount of collisions in each cell and then sum these to find the total number of collisions. Due to the stability attribute of the radix sort and the saved home_cell information it is further possible to reduce the amount of collision checks that need to be performed, which speeds up the program.
 
 ## Solution limitations
-Since the algorithm depends on a three, 16 bit integer value to hold the cell_id, and the cell size depends on the collision distance (to limit the amount of cells each particle can reside in). There is a lower limit on the collision distance meaning that:
+Since the algorithm depends on three 16 bit integer value to hold the cell_id, and the cell size depends on the collision distance (to limit the amount of cells each particle can reside in). There is a lower limit on the collision distance to ensure unqiue hash value for the cell_ids, meaning that:
 
 ```sh
 	(max_x_coordinate - min_x_coordinate) / collision_dist < 2^16-1 = 65535
 ``` 
 
-This is not any problem with regards to the given data and collision distance, but could become a problem if the trial data or trial collision distance is quite different from the test data or collision distance.
+This is not any problem with regards to the given data and collision distance, but could become a problem if the trial data or trial collision distance is quite different from the test data or test collision distance.
 
 ## CUDA implementation
 
