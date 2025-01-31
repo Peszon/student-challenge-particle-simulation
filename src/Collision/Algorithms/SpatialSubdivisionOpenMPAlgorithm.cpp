@@ -4,7 +4,10 @@ int SpatialSubdivisionOpenMPAlgorithm::run(
     const Coordinates& coordinates, 
     double collisionDistance) 
 {
-    double const cellLength {collisionDistance * 1.5}; // The times 1.5 makes it so that the maximum number of phantom cells is 8.
+    // The times 1.5 makes it so that the maximum number of phantom cells is 8.
+    double const cellLength {collisionDistance * 1.5}; 
+
+    // Calculates the collision distance square once to remove square root operations.
     double const collisionDistSq { collisionDistance * collisionDistance };
 
     std::vector<int64_t> cellIdArray {};
@@ -27,13 +30,25 @@ int SpatialSubdivisionOpenMPAlgorithm::calculateNumberOfCollisions(
     const size_t arrayLength = cellIdArray.size();
     int collisionCounter = 0;
 
+    // Each thread takes one particle and compares it to other particles in the same cell.
     #pragma omp parallel for reduction(+:collisionCounter)
     for (size_t i = 0; i < arrayLength - 1; i++) {
         for (size_t j = i + 1; j < arrayLength; j++) {
+
+            // Move the first index if the second index is in another cell.
             if (cellIdArray[i] != cellIdArray[j]) {
                 break;
+            
+            // Preventing double-counting of collisions:
+            /* If two particles collide within their shared home cell, the stability of the Radix sort 
+            * ensures that the collision is counted only once. If they belong to different home cells, 
+            * each particle can be considered a sphere, and counting the collision only when one particle 
+            * (particle at element i) is in its home cell is sufficient to avoid double-counting.
+            */
             } else if (objectIdArray[j].Home_cell == 0) {
                 continue;
+
+            // Do a distance calculation to see if they are close enough to collide.
             } else {
                 Coordinate coord1 = coordinates[objectIdArray[i].particle_id];
                 Coordinate coord2 = coordinates[objectIdArray[j].particle_id];
@@ -61,46 +76,52 @@ void SpatialSubdivisionOpenMPAlgorithm::bitParallelRadix(
     std::vector<int64_t>& cellIdArrayTemp, 
     std::vector<object_id>& objectIdArrayTemp,
     int arrayLength,
-    int numbKeys,            // Number of buckets
-    int numbThreads,
-    int bitshift)            // Number of threads (parts)
+    int numbKeys,            // Number of digits
+    int numbThreads,         // Number of threads (parts)   
+    int bitshift)            // Which bits the current sort looks at, e.g. 0-7, 8-15, ..., 40-47.
 {
     // Using the fact that int division drops the decimals.
     int chunk = (arrayLength + numbThreads - 1) / numbThreads; 
 
+    // Creates a radix counter for each thread.
     std::vector<std::vector<int>> Count(numbThreads, std::vector<int>(numbKeys, 0));
 
-    // First parallel phase: local bucket counts
+    // First parallel phase: counts the occurance of each digit accros all the entries in cellIdArray.
     #pragma omp parallel for num_threads(numbThreads)
     for(int part = 0; part < numbThreads; part++) {
         int start = part * chunk;
         int end   = std::min(start + chunk, arrayLength);
         for(int i = start; i < end; i++) {
-            int bucket = (cellIdArray[i] >> bitshift) & 0xFF; 
-            Count[part][bucket]++;
+            int digit = (cellIdArray[i] >> bitshift) & 0xFF; 
+            Count[part][digit]++;
         }
     }
 
-    // Prefix sums across parts to compute final positions
+
+    // Prefix sequential sums across parts to compute final positions.
+    // This prefix sum could be parallelized, if I had more time/theory, using Hillis and Steele's 
+    // algorithm or Blelloch's algorithm.  
     int base = 0;
-    for(unsigned int bucket = 0; bucket < numbKeys; bucket++) {
+    for(unsigned int digit = 0; digit < numbKeys; digit++) {
         for(unsigned int part = 0; part < numbThreads; part++) {
-            Count[part][bucket] += base;
-            base = Count[part][bucket];
+            Count[part][digit] += base;
+            base = Count[part][digit];
         }
     }
 
-    // Second parallel phase: place elements into the output array
+    // Second parallel phase: placing elements into the output array
     #pragma omp parallel for num_threads(numbThreads)
     for (int part = 0; part < numbThreads; part++) {
         int start = part * chunk;
         int end   = std::min(start + chunk, arrayLength);
+
+        // for-loop iterating backwards to ensure the stability of the sort.
         for (int i = end - 1; i >= start; i--) {
-            unsigned int bucket = static_cast<unsigned int>((cellIdArray[i] >> bitshift) & 0xFF);
-            int pos = Count[part][bucket];
+            unsigned int digit = static_cast<unsigned int>((cellIdArray[i] >> bitshift) & 0xFF);
+            int pos = Count[part][digit];
             cellIdArrayTemp[pos - 1] = cellIdArray[i];
             objectIdArrayTemp[pos - 1] = objectIdArray[i];
-            Count[part][bucket]--;
+            Count[part][digit]--;
         }
     }
 }
@@ -114,13 +135,16 @@ void SpatialSubdivisionOpenMPAlgorithm::radixSort(
     const int numbKeys = 1 << bitshift_step;;
     const int numbThreads = omp_get_max_threads();
     
-    // Temporary arrays, resized to match the orignial arrays.
+    // Temporary arrays.
     std::vector<int64_t> cellIdArrayTemp(arrayLength); 
     std::vector<object_id> objectIdArrayTemp(arrayLength);
 
+    // Doing the bitParallelRadix in 8 bit jump from 0-7 to 40-47 since the 
+    // CellIdArray consists of three 16 bit hashes of each coordiante.
     for (int bitshift = 0; bitshift <= 40; bitshift += bitshift_step) {
         bitParallelRadix(cellIdArray, objectIdArray, cellIdArrayTemp, objectIdArrayTemp, arrayLength, numbKeys, numbThreads, bitshift);
 
+        // Swaping so that the original array is the sorted one.
         cellIdArray.swap(cellIdArrayTemp);
         objectIdArray.swap(objectIdArrayTemp);
     }
@@ -134,12 +158,10 @@ void SpatialSubdivisionOpenMPAlgorithm::initializeObjectandCellArray(
     std::vector<int64_t>& cellIdArray, 
     std::vector<object_id>& objectIdArray) 
 {
-    // We will accumulate in local thread buffers to avoid contention.
-    // Note: You may need to estimate max size or dynamically use a local std::vector.
-
-    // Make an array of vectors, one per thread:
+    // We will accumulate in local thread buffer vectors to avoid contention.
     #pragma omp parallel
     {
+        // Make an array of vectors, one per thread:
         std::vector<int64_t> cellIdsLocal;
         std::vector<object_id> objIdsLocal;
 
@@ -147,16 +169,16 @@ void SpatialSubdivisionOpenMPAlgorithm::initializeObjectandCellArray(
         for (int object_id_counter = 0; object_id_counter < (int)coordinates.size(); ++object_id_counter) {
             const Coordinate& coordinate = coordinates[object_id_counter];
             
-            // 1) Compute home cell:
+            // First compute home cell:
             int64_t grid_x = static_cast<int64_t>(std::floor(coordinate[0] / cellLength));
             int64_t grid_y = static_cast<int64_t>(std::floor(coordinate[1] / cellLength));
             int64_t grid_z = static_cast<int64_t>(std::floor(coordinate[2] / cellLength));
             
-            // 2) Push into local buffers
+            // Push the home cell into local buffers
             cellIdsLocal.push_back(hash_coordinates(grid_x, grid_y, grid_z));
             objIdsLocal.push_back(object_id{object_id_counter, 1});
             
-            // 3) Check neighbors
+            // Check if particle resides inside any neighbouring cells.
             for (int64_t dx = -1; dx <= 1; ++dx) {
                 for (int64_t dy = -1; dy <= 1; ++dy) {
                     for (int64_t dz = -1; dz <= 1; ++dz) {
@@ -181,6 +203,7 @@ void SpatialSubdivisionOpenMPAlgorithm::initializeObjectandCellArray(
                                       + (coordinate[1] - nearestY) * (coordinate[1] - nearestY)
                                       + (coordinate[2] - nearestZ) * (coordinate[2] - nearestZ);
 
+                        // Add the neighbouring cell if it is closer than the collision distance.
                         if (distSq <= collisionDistSq) {
                             cellIdsLocal.push_back(
                                 hash_coordinates(grid_x + dx, grid_y + dy, grid_z + dz));

@@ -17,7 +17,7 @@ make -j16
 ```
 
 This will compile the project using optimization flags `-O3`, multithreading flags `-j16` and include 
-necessary headers. Change the number after -j to adjust the number of core that will be used to execute the program. The compiled executable will be available in the the ./bin directory and can be executed with:
+necessary headers. Change the number after -j to adjust the number of cores that will be used to execute the program. The compiled executable will be available in the the ./bin directory and can be executed with:
 
 ```sh
 ./bin/output
@@ -36,19 +36,20 @@ The second step is to sort the list containing the objects based upon the cell_i
 The third step is to calculate and then sum the amount of collisions in each cell. Due to the stability attribute of the radix sort and the saved home cell information it is further possible to reduce the amount of collision checks that need to be performed, which speeds up the program.
 
 ## Solution limitations
-Since the algorithm depends on a three, 16bit integer value to hold the cell_id, and the cell size depends on the collision distance (to limit the amount of cells each particle can reside in). There is a lower limit on the collision distance meaning that:
+Since the algorithm depends on a three, 16 bit integer value to hold the cell_id, and the cell size depends on the collision distance (to limit the amount of cells each particle can reside in). There is a lower limit on the collision distance meaning that:
 
 ```sh
-	(max_x_coordinate - min_x_coordinate) / collision_dist < 65000 
+	(max_x_coordinate - min_x_coordinate) / collision_dist < 2^16-1 = 65535
 ``` 
 
 This is not any problem with regards to the given data and collision distance, but could become a problem if the trial data or trial collision distance is quite different from the test data or collision distance.
 
 ## CUDA implementation
 
-I have tried to implement a CUDA version of the code, but since I don't have access to a machine with a graphics card this was quite an uphill battle. The trial CUDA implementation of the code can be found in the CUDA folder. I found GPU accelerated computation really interesting and I hope to further my knowledge in the area during the summer. 
+I have tried to implement a CUDA version of the code, but since I don't have access to a machine with a graphics card this was quite an uphill battle. The experimental, not-working, CUDA implementation of the code can be found in the CUDA folder. I found GPU accelerated computation really interesting and I hope to further my knowledge in the area during the summer. 
 
 Thank you for considering my code!
 
 Allt gott
+
 Felix Persson

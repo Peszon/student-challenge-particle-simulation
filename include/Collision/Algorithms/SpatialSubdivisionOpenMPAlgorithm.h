@@ -22,7 +22,7 @@ class SpatialSubdivisionOpenMPAlgorithm : public CollisionAlgorithm
 {
     public:
         /**
-         * Runs the spatial subdivision collision detection algorithm.
+         * Runs the parallel spatial subdivision collision detection algorithm.
          *
          * @param coordinates A vector of 3D coordinates representing particle positions.
          * @param collision_dist The maximum distance to consider for detecting a collision.
@@ -58,11 +58,20 @@ class SpatialSubdivisionOpenMPAlgorithm : public CollisionAlgorithm
             std::vector<int64_t>& cellIdArray, 
             std::vector<object_id>& objectIdArray);
 
+
         /**
-         * Sorts the particles using a radix sort on their hashed cell IDs.
-         *
-         * @param cellIdArray The array of hashed cell IDs to be sorted.
-         * @param objectIdArray The array of object metadata to be rearranged in sync with cellIdArray.
+         * Sorts the particles using a parallel bit-parallel radix sort on their hashed cell IDs.
+         * This function performs a bit-parallel radix sort on the provided `cellIdArray`, rearranging
+         * the `objectIdArray` in sync. 
+         * 
+         * @param cellIdArray        The input array of hashed cell IDs to be sorted.
+         * @param objectIdArray      The input array of object metadata to be rearranged in sync with `cellIdArray`.
+         * @param cellIdArrayTemp    Temporary array used for sorting the cell IDs.
+         * @param objectIdArrayTemp  Temporary array used for rearranging the object metadata.
+         * @param arrayLength        The number of elements in the arrays to be sorted.
+         * @param numbKeys           The number of buckets (keys) used in the radix sort.
+         * @param numbThreads        The number of threads to utilize for parallel sorting.
+         * @param bitshift           The number of bits to shift during each pass of the radix sort.
          */
         void bitParallelRadix(
             const std::vector<int64_t>& cellIdArray, 
@@ -75,7 +84,7 @@ class SpatialSubdivisionOpenMPAlgorithm : public CollisionAlgorithm
             int bitshift) ;
 
         /**
-         * Sorts the particles using a radix sort on their hashed cell IDs.
+         * Sorts the particles using a  parallel LSD radix sort on their hashed cell IDs.
          *
          * @param cellIdArray The array of hashed cell IDs to be sorted.
          * @param objectIdArray The array of object metadata to be rearranged in sync with cellIdArray.
